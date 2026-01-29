@@ -83,9 +83,41 @@ def root():
     return RedirectResponse(url="/static/index.html")
 
 
+
+from fastapi import Query
+from typing import Optional, List
+
 @app.get("/activities")
-def get_activities():
-    return activities
+def get_activities(
+    search: Optional[str] = Query(None, description="Search text for activity name or description"),
+    sort: Optional[str] = Query(None, description="Sort by 'name' or 'time'"),
+    category: Optional[str] = Query(None, description="Filter by category (not implemented, placeholder)"),
+):
+    # Convert activities dict to list of tuples for easier sorting/filtering
+    activity_items = list(activities.items())
+
+    # Search filter
+    if search:
+        activity_items = [
+            (name, details)
+            for name, details in activity_items
+            if search.lower() in name.lower() or search.lower() in details["description"].lower()
+        ]
+
+    # Sorting
+    if sort == "name":
+        activity_items.sort(key=lambda x: x[0].lower())
+    elif sort == "time":
+        # Sort by schedule string (not ideal, but works for demo)
+        activity_items.sort(key=lambda x: x[1]["schedule"].lower())
+
+    # Category filter (not implemented, placeholder for future)
+    if category:
+        # If you add categories to activities, filter here
+        pass
+
+    # Return as dict for compatibility
+    return {name: details for name, details in activity_items}
 
 
 @app.post("/activities/{activity_name}/signup")
